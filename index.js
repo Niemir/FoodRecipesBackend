@@ -1,72 +1,68 @@
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config()
 }
+let { Client, Entity, Schema, Repository } = require('redis-om')
 const express = require('express')
-const redis = require('redis')
-const client = redis.createClient({
-  url: `redis://${process.env.USERNAME_DB}:${process.env.PASSWORD}@${process.env.HOST}:${process.env.PORT}`,
-})
+const bodyParser = require('body-parser')
+const client = new Client()
+const cors = require('cors')
 const app = express()
-client.connect()
 
-app.get('/api', async (req, res) => {
-  try {
-    client.set('asyncGet', 'value2 ')
-    // redisClient.get("apiQuotes", async (err, quotes) => {
-    //   if (quotes) {
-    //     res.send(quotes);
-    //   } else {
-    //     const getQuotes = await axios.get(
-    //       `https://www.breakingbadapi.com/api/quotes`
-    //     );
-    //     const { data: quotes } = getQuotes;
-    //     redisClient.setex("apiQuotes", 3600, JSON.stringify(quotes));
-    //     res.json(quotes);
-    //   }
-    // });
-    res.send('gut')
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json(error)
+app.use(cors())
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded())
+
+// parse application/json
+app.use(bodyParser.json())
+async function connect() {
+  if (!client.isOpen()) {
+    await client.open(
+      `redis://${process.env.USERNAME_DB}:${process.env.PASSWORD}@${process.env.HOST}:${process.env.PORT}`,
+    )
   }
+}
+
+class Recipe extends Entity {}
+
+let schema = new Schema(
+  Recipe,
+  {
+    title: { type: 'string' },
+    ingredientsNames: { type: 'array' },
+    ingredientsQty: { type: 'array' },
+    ingredientsUnits: { type: 'array' },
+  },
+  {
+    dataStructure: 'JSON',
+  },
+)
+
+async function createRecipe(data) {
+  await connect()
+  const repository = new Repository(schema, client)
+
+  const recipe = repository.createEntity(data)
+  console.log(data)
+  const id = await repository.save(recipe)
+  return id
+}
+
+app.post('/api', async (req, res) => {
+  try {
+    const id = await createRecipe(req.body)
+    res.status(200).json({ id })
+  } catch (error) {}
 })
 
-app.listen('3000', () => console.log('object'))
+app.get('/getRecipes', async (req, res) => {
+  await connect()
+  const repository = new Repository(schema, client)
+  // await repository.createIndex()
+  let recipes = await repository.search().return.all()
 
-// ;(async () => {
-//   try {
-//     console.log(process.env.USERNAME_DB)
-//     const client = redis.createClient({
-//       url: `redis://${process.env.USERNAME_DB}:${process.env.PASSWORD}@${process.env.HOST}:${process.env.PORT}`,
-//     })
+  console.log(recipes)
+  res.json(recipes)
+  // res.send({ express: 'YOUR EXPRESS BACKEND IS CONNECTED TO REACT' }) //Line 10
+})
 
-//     client.on('error', (err) => console.log('Redis Client Error', err))
-
-//     await client.connect()
-
-//     client.on('connect', function () {
-//       console.log('Connected!')
-//     })
-
-//     await client.set('test', 'value')
-//     const value = await client.get('key')
-//   } catch (err) {
-//     console.log(err)
-//   }
-// })()
-
-// async function run() {
-//   console.log('e')
-
-//   const client = redis.createClient({
-//     port: process.env.PORT,
-//     host: process.env.HOST,
-//   })
-//   console.log(client)
-//   client.on('connect', function () {
-//     console.log('Connected!')
-//   })
-
-//   clg
-// }
-// run()
+app.listen('5000', () => console.log('object'))
