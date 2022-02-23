@@ -1,72 +1,27 @@
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config()
 }
-let { Client, Entity, Schema, Repository } = require('redis-om')
 const express = require('express')
-const bodyParser = require('body-parser')
-const client = new Client()
+// const bodyParser = require('body-parser')
 const cors = require('cors')
 const app = express()
+const recipesRouter = require('./routes/recipes')
+const authorsRouter = require('./routes/authors')
+const mongoose = require('mongoose')
 
 app.use(cors())
-// parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded())
+// app.use(bodyParser.urlencoded())
+// app.use(bodyParser.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 
-// parse application/json
-app.use(bodyParser.json())
-async function connect() {
-  if (!client.isOpen()) {
-    await client.open(
-      `redis://${process.env.USERNAME_DB}:${process.env.PASSWORD}@${process.env.HOST}:${process.env.PORT}`,
-    )
-  }
-}
+mongoose.connect(process.env.DATABASE_URL)
+const db = mongoose.connection
+db.on('error', (error) => console.error(error))
+db.once('open', () => console.log('connected to mongoose'))
 
-class Recipe extends Entity {}
-
-let schema = new Schema(
-  Recipe,
-  {
-    title: { type: 'string' },
-    ingredientsNames: { type: 'array' },
-    ingredientsQty: { type: 'array' },
-    ingredientsUnits: { type: 'array' },
-    protein: { type: 'number' },
-    carbohydrates: { type: 'number' },
-    fat: { type: 'number' },
-    calories: { type: 'number' },
-  },
-  {
-    dataStructure: 'JSON',
-  },
-)
-
-async function createRecipe(data) {
-  await connect()
-  const repository = new Repository(schema, client)
-
-  const recipe = repository.createEntity(data)
-  console.log(data)
-  const id = await repository.save(recipe)
-  return id
-}
-
-app.post('/api', async (req, res) => {
-  try {
-    const id = await createRecipe(req.body)
-    res.status(200).json({ id })
-  } catch (error) {}
-})
-
-app.get('/getRecipes', async (req, res) => {
-  await connect()
-  const repository = new Repository(schema, client)
-  // await repository.createIndex()
-  let recipes = await repository.search().return.all()
-
-  console.log(recipes)
-  res.json(recipes)
-  // res.send({ express: 'YOUR EXPRESS BACKEND IS CONNECTED TO REACT' }) //Line 10
-})
+// app.use('/', indexRouter)
+app.use('/recipes', recipesRouter)
+app.use('/authors', authorsRouter)
 
 app.listen('5000', () => console.log('object'))
