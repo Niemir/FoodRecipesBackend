@@ -31,6 +31,10 @@ let schema = new Schema(
     ingredientsNames: { type: 'array' },
     ingredientsQty: { type: 'array' },
     ingredientsUnits: { type: 'array' },
+    protein: { type: 'number' },
+    carbohydrates: { type: 'number' },
+    fat: { type: 'number' },
+    calories: { type: 'number' },
   },
   {
     dataStructure: 'JSON',
