@@ -1,10 +1,23 @@
 const mongoose = require('mongoose')
 
 const shoppingListSchema = new mongoose.Schema({
-  name: {
-    type: String,
+  recipes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'Recipe',
+    },
+  ],
+  createdAt: {
+    type: Date,
     required: true,
+    default: Date.now,
+  },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Author',
   },
 })
 
-module.exports = mongoose.model('Author', shoppingListSchema)
+module.exports = mongoose.model('ShoppingList', shoppingListSchema)
