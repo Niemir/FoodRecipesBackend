@@ -1,8 +1,7 @@
 const express = require('express')
 const Author = require('../models/author')
-const Recipes = require('../models/recipe')
-const { check, validationResult } = require('express-validator')
 const router = express.Router()
+const { body, check, validationResult } = require('express-validator')
 
 // All authors route
 router.get('/', async (req, res) => {
@@ -14,6 +13,24 @@ router.get('/', async (req, res) => {
   } catch {
     res.status(500)
     throw new Error('Error during fetching atuhors')
+  }
+})
+
+// get single Author
+router.get('/single', body('id').isMongoId(), async (req, res) => {
+  const { id } = req.body
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() })
+  }
+
+  try {
+    let author = await Author.findById(id)
+    res.status(200).json({
+      author,
+    })
+  } catch {
+    throw new Error('author get single fail ')
   }
 })
 
