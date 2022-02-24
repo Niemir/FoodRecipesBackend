@@ -6,23 +6,15 @@ const router = express.Router()
 
 // All authors route
 router.get('/', async (req, res) => {
-  //   let searchOptions = {}
-  //   if (req.query.name != null && req.query.name !== '') {
-  //     searchOptions.name = new RegExp(req.query.name, 'i')
-  //   }
-
-  //   try {
-  //     console.log(searchOptions)
-  //     const authors = await Author.find(searchOptions)
-  //     res.json({
-  //       authors: authors,
-  //       searchOptions: req.query,
-  //     })
-  //   } catch {
-  //     console.log('wut')
-  //     res.redirect('/')
-  //   }
-  res.send('pk')
+  try {
+    const authors = await Author.find()
+    res.json({
+      authors: authors,
+    })
+  } catch {
+    res.status(500)
+    throw new Error('Error during fetching atuhors')
+  }
 })
 
 // Create author
@@ -47,11 +39,9 @@ router.post(
 
     try {
       const newAuthor = await author.save()
-      //   res.send('git autor')
       res.json({
         newAuthor,
       })
-      //   res.redirect(`authors/${newAuthor.id}`)
     } catch {
       throw new Error('error author')
     }
