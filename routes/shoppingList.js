@@ -35,7 +35,7 @@ router.get('/single', body('id').isMongoId(), async (req, res) => {
       author,
     })
   } catch {
-    // res.status(500)
+    res.status(500)
     throw new Error('shoppinglist get all fail ')
   }
 })

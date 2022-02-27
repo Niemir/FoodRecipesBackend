@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const { Schema } = require('redis-om')
 
 const recipeSchema = new mongoose.Schema({
   name: {

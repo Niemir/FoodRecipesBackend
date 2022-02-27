@@ -3,14 +3,27 @@ const router = express.Router()
 const Recipe = require('../models/recipe')
 const { body, validationResult } = require('express-validator')
 
+// get all recipes
 router.get('/', async (req, res) => {
   let recipes
 
   try {
-    recipes = await Recipe.find().sort({ createdAt: 'desc' })
+    recipes = await Recipe.find().sort({ name: 'asc' })
     res.status(200).json({ recipes })
   } catch {
     recipes = []
+  }
+})
+
+// get single recipe
+router.get('/single/:id', async (req, res) => {
+  const id = req.params.id
+  try {
+    let recipe = await Recipe.findById(id)
+    res.status(200).json(recipe)
+  } catch {
+    res.status(500)
+    throw new Error('recipe add error')
   }
 })
 
@@ -27,6 +40,7 @@ router.post(
   async (req, res) => {
     const { name, author, ingredients, protein, carbohydrates, fat, calories } = req.body
 
+    console.log(name)
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
@@ -48,7 +62,7 @@ router.post(
 
     try {
       const newRecipe = await recipe.save()
-      res.status(200).json({ newRecipe })
+      res.SHOPPING_LIST(200).json({ newRecipe })
     } catch (err) {
       res.status(500)
       throw new Error('recipe add error')
@@ -56,8 +70,8 @@ router.post(
   },
 )
 
-router.put('/edit', body('id').isMongoId(), async (req, res) => {
-  const { id, name, author, ingredients, protein, carbohydrates, fat, calories } = req.body
+router.put('/edit', body('_id').isMongoId(), async (req, res) => {
+  const { _id, name, author, ingredients, protein, carbohydrates, fat, calories } = req.body
 
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -71,7 +85,7 @@ router.put('/edit', body('id').isMongoId(), async (req, res) => {
   let recipe
 
   try {
-    recipe = await Recipe.findById(id)
+    recipe = await Recipe.findById(_id)
     recipe.name = name
     recipe.author = author
     recipe.ingredients = ingredients
