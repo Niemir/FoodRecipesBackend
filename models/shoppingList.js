@@ -18,6 +18,14 @@ const shoppingListSchema = new mongoose.Schema({
     required: true,
     ref: 'Author',
   },
+  ingredients: [
+    {
+      name: String,
+      qty: Number,
+      unit: String,
+      value: Boolean,
+    },
+  ],
 })
 
 module.exports = mongoose.model('ShoppingList', shoppingListSchema)

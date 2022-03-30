@@ -62,10 +62,10 @@ router.post(
 
     try {
       const newRecipe = await recipe.save()
-      res.SHOPPING_LIST(200).json({ newRecipe })
+      res.status(200).json({ newRecipe })
     } catch (err) {
       res.status(500)
-      throw new Error('recipe add error')
+      throw new Error(err)
     }
   },
 )
