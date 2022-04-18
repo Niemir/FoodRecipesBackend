@@ -2,9 +2,9 @@ const express = require('express')
 const router = express.Router()
 const Recipe = require('../models/recipe')
 const { body, validationResult } = require('express-validator')
-
+const auth = require('../middleware/auth')
 // get all recipes
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   let recipes
 
   try {
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 })
 
 // get single recipe
-router.get('/single/:id', async (req, res) => {
+router.get('/single/:id', auth, async (req, res) => {
   const id = req.params.id
   try {
     let recipe = await Recipe.findById(id)
