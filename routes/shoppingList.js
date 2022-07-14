@@ -57,6 +57,7 @@ router.get('/single', query('id').isMongoId(), async (req, res) => {
     const author = await Author.findById(shoppingList.author)
     const recipes = await Recipe.find().where('_id').in(shoppingList.recipes).exec()
 
+    console.log('recipes',recipes)
     res.status(200).json({
       id: shoppingList._id,
       recipes,
@@ -98,11 +99,15 @@ router.post('/add', auth, body('recipes').isArray(), body('token').isString(), a
     ingredients.forEach((el) => allIngredientsArray.push(el))
   })
 
+  console.log(allIngredientsArray)
+
   const result = allIngredientsArray.reduce((acc, { name, ingredient, qty, unit, id, type }) => {
-    acc[name] = { name, qty, unit, ingredient, type, id, value: false }
-    acc[name].qty += qty
-    return acc
-    coś tu kurde je  nie tak, sprawdzic dlaczego jak dodalem 3 dni z tym samym przepisem to podliczylo go tlyko 2 razy
+
+    const newacc = {...acc}
+    newacc[name] = { name, qty, unit, ingredient, type, id, value: false }
+    newacc[name].qty += acc?.[name]?.qty || 0
+    return newacc
+
   }, {})
 
   const shoppingList = new ShoppingList({

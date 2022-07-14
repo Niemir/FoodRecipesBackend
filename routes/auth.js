@@ -6,6 +6,7 @@ const jsonwebtoken = require('jsonwebtoken')
 const User = require('../models/user')
 
 router.post('/login', body('email').isEmail(), body('password').isString(), async (req, res) => {
+  console.log('fsd')
   // Our login logic starts here
   try {
     // Get user input
@@ -44,6 +45,7 @@ router.post(
   body('email').isEmail(),
   body('password').isString(),
   async (req, res) => {
+    console.log('f')
     const { name, email, password } = req.body
 
     const errors = validationResult(req)

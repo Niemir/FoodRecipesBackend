@@ -41,4 +41,9 @@ app.use('/ingredients', ingredientsRouter)
 app.use('/auth', authRouter)
 app.use('/connections', connectionsRouter)
 
+app.get('/',(req,res)=>{
+res.send('connect')
+return 'el'
+})
+
 app.listen('5000', () => console.log('object'))
