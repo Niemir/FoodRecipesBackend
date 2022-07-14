@@ -1,7 +1,7 @@
 const express = require('express')
-const Author = require('../models/author')
+const Author = require('../models/user')
 const router = express.Router()
-const { body, check, validationResult } = require('express-validator')
+const { body, validationResult } = require('express-validator')
 
 // All authors route
 router.get('/', async (req, res) => {
@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
     res.json({
       authors: authors,
     })
-  } catch {
+  } catch (err) {
     res.status(500)
     throw new Error('Error during fetching atuhors')
   }
@@ -29,39 +29,39 @@ router.get('/single', body('id').isMongoId(), async (req, res) => {
     res.status(200).json({
       author,
     })
-  } catch {
+  } catch (err) {
     throw new Error('author get single fail ')
   }
 })
 
-// Create author
-router.post(
-  '/',
-  check('name')
-    .exists()
-    .isLength({ min: 3 })
-    .withMessage('Name must be at least 3 chars long')
-    .isLength({ max: 20 })
-    .withMessage('Name must be maximum 20 chars long'),
-  async (req, res) => {
-    const errors = validationResult(req)
+// // Create author
+// router.post(
+//   '/',
+//   check('name')
+//     .exists()
+//     .isLength({ min: 3 })
+//     .withMessage('Name must be at least 3 chars long')
+//     .isLength({ max: 20 })
+//     .withMessage('Name must be maximum 20 chars long'),
+//   async (req, res) => {
+//     const errors = validationResult(req)
 
-    const author = new Author({
-      name: req.body.name,
-    })
+//     const author = new Author({
+//       name: req.body.name,
+//     })
 
-    if (!errors.isEmpty()) {
-      throw new Error('empty')
-    }
+//     if (!errors.isEmpty()) {
+//       throw new Error('empty')
+//     }
 
-    try {
-      const newAuthor = await author.save()
-      res.json({
-        newAuthor,
-      })
-    } catch {
-      throw new Error('error author')
-    }
-  },
-)
+//     try {
+//       const newAuthor = await author.save()
+//       res.json({
+//         newAuthor,
+//       })
+//     } catch {
+//       throw new Error('error author')
+//     }
+//   },
+// )
 module.exports = router

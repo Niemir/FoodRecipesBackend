@@ -21,17 +21,17 @@ router.get('/search', async (req, res) => {
 
   if (query) {
     try {
-      let recipe = await Ingredient.find({ name: { $regex: query, $options: 'i' } })
+      let recipe = await Ingredient.find({ name: { $regex: query, $options: 'i' } }).limit(10)
       res.status(200).json(recipe)
-    } catch {
+    } catch (err) {
       res.status(500)
       throw new Error('recipe add error')
     }
   } else {
     try {
-      let recipe = await Ingredient.find().limit(5)
+      let recipe = await Ingredient.find().limit(10)
       res.status(200).json(recipe)
-    } catch {
+    } catch (err) {
       res.status(500)
       throw new Error('recipe add error')
     }

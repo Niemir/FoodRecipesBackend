@@ -1,16 +1,27 @@
 const express = require('express')
 const router = express.Router()
 const Recipe = require('../models/recipe')
-const Author = require('../models/author')
+const Author = require('../models/user')
 const ShoppingList = require('../models/shoppingList')
 const { body, validationResult, query } = require('express-validator')
 const { v4: uuidv4 } = require('uuid')
+const auth = require('../middleware/auth')
+const dataFromToken = require('../helpers/encodeToken')
+const { default: mongoose } = require('mongoose')
 
 // get all
-router.get('/', async (req, res) => {
-  try {
-    const shoppingLists = await ShoppingList.find().sort({ createdAt: 'desc' })
+router.get('/', auth, query('token').isString(), async (req, res) => {
+  const { token } = req.query
 
+  const { user_id, email } = dataFromToken(token)
+
+  try {
+    const currentUser = await Author.findById(user_id)
+    const shoppingLists = await ShoppingList.find({ author: { $in: [user_id, ...currentUser.connections] } })
+      .sort({ createdAt: 'desc' })
+      .limit(20)
+
+    // console.log(shoppingLists)
     const awaitForAuthors = shoppingLists.map(async (list) => {
       const author = await Author.findById(list.author)
 
@@ -24,7 +35,7 @@ router.get('/', async (req, res) => {
     const withAuthors = await Promise.all(awaitForAuthors)
 
     res.status(200).json({ withAuthors })
-  } catch {
+  } catch (err) {
     res.status(500)
     throw new Error('shoppinglist get all fail ')
   }
@@ -53,15 +64,17 @@ router.get('/single', query('id').isMongoId(), async (req, res) => {
       ingredients: shoppingList.ingredients,
       createdAt: shoppingList.createdAt,
     })
-  } catch {
+  } catch (err) {
     res.status(500)
     throw new Error('get single list fail')
   }
 })
 
 // Adding new shopping list
-router.post('/add', body('recipes').isArray(), body('author').isMongoId(), async (req, res) => {
-  const { recipes, author } = req.body
+router.post('/add', auth, body('recipes').isArray(), body('token').isString(), async (req, res) => {
+  const { recipes, token } = req.body
+
+  const { user_id } = dataFromToken(token)
 
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -85,15 +98,16 @@ router.post('/add', body('recipes').isArray(), body('author').isMongoId(), async
     ingredients.forEach((el) => allIngredientsArray.push(el))
   })
 
-  const result = allIngredientsArray.reduce((acc, { name, qty, unit }) => {
-    acc[name] = { name, qty, unit, value: false }
+  const result = allIngredientsArray.reduce((acc, { name, ingredient, qty, unit, id, type }) => {
+    acc[name] = { name, qty, unit, ingredient, type, id, value: false }
     acc[name].qty += qty
     return acc
+    coś tu kurde je  nie tak, sprawdzic dlaczego jak dodalem 3 dni z tym samym przepisem to podliczylo go tlyko 2 razy
   }, {})
 
   const shoppingList = new ShoppingList({
     recipes,
-    author,
+    author: user_id,
     ingredients: Object.values(result),
   })
 
@@ -105,6 +119,49 @@ router.post('/add', body('recipes').isArray(), body('author').isMongoId(), async
     throw new Error('recipe add error')
   }
 })
+
+//Merging two lists together
+router.post(
+  '/merge',
+  auth,
+  body('recipe1').isString(),
+  body('recipe2').isString(),
+  body('token').isString(),
+  async (req, res) => {
+    const { recipe1, recipe2, token } = req.body
+
+    const { user_id } = dataFromToken(token)
+
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+
+    const shoppingList1 = await ShoppingList.findById(mongoose.Types.ObjectId(recipe1))
+    const shoppingList2 = await ShoppingList.findById(mongoose.Types.ObjectId(recipe2))
+
+    //TODO: set ingredients with value as false, to be unchecked after merging
+    const allIngredients1 = shoppingList1.ingredients
+    const allIngredients2 = shoppingList2.ingredients
+    const allRecipes1 = shoppingList1.recipes
+    const allRecipes2 = shoppingList2.recipes
+
+    const shoppingList = new ShoppingList({
+      recipes: [...allRecipes1, ...allRecipes2],
+      ingredients: [...allIngredients1, ...allIngredients2],
+      author: user_id,
+      connected: true,
+    })
+
+    try {
+      const newShoppingList = await shoppingList.save()
+      res.status(200).json({ newShoppingList })
+    } catch (err) {
+      res.status(500)
+      throw new Error('recipe add error', err)
+    }
+  },
+)
 
 // Edit shopping list
 router.put('/edit', body('id').isMongoId(), body('recipes').isArray(), body('author').isMongoId(), async (req, res) => {
@@ -141,7 +198,7 @@ router.delete('/delete', body('id').isMongoId(), async (req, res) => {
     let shoppingList = await ShoppingList.findById(id)
     await shoppingList.remove()
     res.status(200).send('deleted')
-  } catch {
+  } catch (err) {
     res.status(500).send('error')
     throw new Error('shoppingList delete error')
   }
@@ -169,7 +226,7 @@ router.put(
       shoppingList.ingredients = ingredients
       const updatedShoppingList = await shoppingList.save()
       res.status(200).json({ updatedShoppingList })
-    } catch {
+    } catch (err) {
       res.status(500)
       throw new Error('shoppingList update error')
     }

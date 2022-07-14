@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { body, check, validationResult } = require('express-validator')
+const { body, validationResult } = require('express-validator')
 const bcryptjs = require('bcryptjs')
 const jsonwebtoken = require('jsonwebtoken')
 const User = require('../models/user')
@@ -18,7 +18,6 @@ router.post('/login', body('email').isEmail(), body('password').isString(), asyn
 
     // Validate if user exist in our database
     const user = await User.findOne({ email })
-
     if (user && (await bcryptjs.compare(password, user.password))) {
       // Create token
       const token = jsonwebtoken.sign({ user_id: user._id, email }, process.env.TOKEN_KEY, {
@@ -65,6 +64,7 @@ router.post(
         name,
         email: email.toLowerCase(), // sanitize: convert email to lowercase
         password: encryptedPassword,
+        connections: [],
       })
 
       // Create token

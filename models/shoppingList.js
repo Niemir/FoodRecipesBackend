@@ -26,6 +26,9 @@ const shoppingListSchema = new mongoose.Schema({
       value: Boolean,
     },
   ],
+  connected: {
+    type: Boolean,
+  },
 })
 
 module.exports = mongoose.model('ShoppingList', shoppingListSchema)
