@@ -57,7 +57,17 @@ router.get('/single', query('id').isMongoId(), async (req, res) => {
     const author = await Author.findById(shoppingList.author)
     const recipes = await Recipe.find().where('_id').in(shoppingList.recipes).exec()
 
-    console.log('recipes',recipes)
+
+    if(shoppingList.ingredients && shoppingList.ingredients.length > 0){
+      shoppingList.ingredients = shoppingList.ingredients.map(ingredient => {
+        return {
+          ...ingredient,
+          uuid: uuidv4()
+        }
+      }
+      )
+
+    }
     res.status(200).json({
       id: shoppingList._id,
       recipes,
@@ -101,14 +111,20 @@ router.post('/add', auth, body('recipes').isArray(), body('token').isString(), a
 
   console.log(allIngredientsArray)
 
-  const result = allIngredientsArray.reduce((acc, { name, ingredient, qty, unit, id, type }) => {
+
+  const result = allIngredientsArray.reduce((acc, { name,  qty, unit, id, type }) => {
 
     const newacc = {...acc}
-    newacc[name] = { name, qty, unit, ingredient, type, id, value: false }
+    newacc[name] = { name, qty, unit,  type, id, value: false }
     newacc[name].qty += acc?.[name]?.qty || 0
     return newacc
 
   }, {})
+
+  console.log('po', result)
+  console.log('po2', Object.values(result))
+
+
 
   const shoppingList = new ShoppingList({
     recipes,
@@ -150,6 +166,9 @@ router.post(
     const allIngredients2 = shoppingList2.ingredients
     const allRecipes1 = shoppingList1.recipes
     const allRecipes2 = shoppingList2.recipes
+// console.log('merg')
+//     console.log('allIngredients1',allIngredients1)
+//     console.log('allIngredients2',allIngredients2)
 
     const shoppingList = new ShoppingList({
       recipes: [...allRecipes1, ...allRecipes2],

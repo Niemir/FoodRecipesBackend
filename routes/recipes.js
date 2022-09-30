@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const mongoose = require('mongoose')
 const Recipe = require('../models/recipe')
 const Ingredient = require('../models/ingredients')
 const { body, validationResult } = require('express-validator')
@@ -57,7 +58,9 @@ router.post(
 
     const awaitForIngredients = ingredients.map(async (el) => {
       const ingredient = await Ingredient.findById(el.id)
-      return { name: el.name, unit: el.unit, qty: el.qty, type: ingredient.type, id: el.id }
+
+      console.log(ingredient)
+      return { name: el.name, unit: el.unit, qty: el.qty, type: ingredient.type, _id: mongoose.Types.ObjectId(el.id)  }
     })
 
     const allIngredients = await Promise.all(awaitForIngredients)
@@ -95,13 +98,21 @@ router.put('/edit', auth, body('_id').isMongoId(), async (req, res) => {
     throw new Error('missing parametrs')
   }
 
-  let recipe
+  const awaitForIngredients = ingredients.map(async (el) => {
+    const ingredient = await Ingredient.findById(el.id)
 
+    console.log(ingredient)
+    return { name: el.name, unit: el.unit, qty: el.qty, type: ingredient.type, _id: mongoose.Types.ObjectId(el.id) }
+  })
+
+  const allIngredients = await Promise.all(awaitForIngredients)
+
+  let recipe
   try {
     recipe = await Recipe.findById(_id)
     recipe.name = name
     recipe.author = author
-    recipe.ingredients = ingredients
+    recipe.ingredients = allIngredients
     recipe.protein = protein
     recipe.carbohydrates = carbohydrates
     recipe.fat = fat

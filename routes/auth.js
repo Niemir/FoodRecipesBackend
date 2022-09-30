@@ -6,7 +6,6 @@ const jsonwebtoken = require('jsonwebtoken')
 const User = require('../models/user')
 
 router.post('/login', body('email').isEmail(), body('password').isString(), async (req, res) => {
-  console.log('fsd')
   // Our login logic starts here
   try {
     // Get user input
@@ -16,9 +15,13 @@ router.post('/login', body('email').isEmail(), body('password').isString(), asyn
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
     }
-
+    
     // Validate if user exist in our database
     const user = await User.findOne({ email })
+    console.log('fsd2')
+    if (!user) {
+      return res.status(400).json({ errors: "user not found" })
+    }
     if (user && (await bcryptjs.compare(password, user.password))) {
       // Create token
       const token = jsonwebtoken.sign({ user_id: user._id, email }, process.env.TOKEN_KEY, {
