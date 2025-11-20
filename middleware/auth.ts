@@ -1,0 +1,28 @@
+import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
+
+// Extend Express Request interface to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: string | jwt.JwtPayload;
+    }
+  }
+}
+
+const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+  if (!token) {
+    return res.status(401).send('Wymagany token do autoryzacji');
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.TOKEN_KEY || '');
+    req.user = decoded;
+  } catch (err) {
+    return res.status(401).send('Nieprawidłowy token');
+  }
+  return next();
+};
+
+export default verifyToken;

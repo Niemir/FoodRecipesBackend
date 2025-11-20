@@ -1,0 +1,158 @@
+import express, { Request, Response, Router } from 'express';
+import mongoose from 'mongoose';
+import Recipe from '../models/recipe';
+import Ingredient from '../models/ingredients';
+import { body, validationResult } from 'express-validator';
+import auth from '../middleware/auth';
+import dataFromToken from '../helpers/encodeToken';
+
+const router: Router = express.Router();
+
+// get all recipes
+router.get('/', auth, async (req: Request, res: Response) => {
+  let recipes: any[] = [];
+
+  try {
+    recipes = await Recipe.find().sort({ name: 'asc' });
+    res.status(200).json({ recipes });
+  } catch (err) {
+    recipes = [];
+    res.status(200).json({ recipes }); // Should probably return empty array if error or handle error
+  }
+});
+
+// get single recipe
+router.get('/single/:id', auth, async (req: Request, res: Response) => {
+  const id = req.params.id;
+
+  console.log(id);
+  try {
+    let recipe = await Recipe.findById(id);
+    res.status(200).json(recipe);
+  } catch (err) {
+    res.status(500);
+    throw new Error('recipe add error');
+  }
+});
+
+// Adding new recipe
+router.post(
+  '/add',
+  auth,
+  body('name').isString(),
+  body('ingredients').isArray(),
+  body('protein').isNumeric(),
+  body('carbohydrates').isNumeric(),
+  body('fat').isNumeric(),
+  body('calories').isNumeric(),
+  async (req: Request, res: Response) => {
+    const { name, ingredients, protein, carbohydrates, fat, calories, token } = req.body;
+    const { user_id } = dataFromToken(token);
+
+    console.log(name);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    if (!name || !token || !ingredients || !protein || !carbohydrates || !fat || !calories) {
+      throw new Error('missing parametrs');
+    }
+
+    const awaitForIngredients = ingredients.map(async (el: any) => {
+      const ingredient = await Ingredient.findById(el.id);
+
+      console.log(ingredient);
+      return { name: el.name, unit: el.unit, qty: el.qty, type: ingredient?.type, _id: new mongoose.Types.ObjectId(el.id) };
+    });
+
+    const allIngredients = await Promise.all(awaitForIngredients);
+
+    const recipe = new Recipe({
+      name,
+      author: user_id,
+      ingredients: allIngredients,
+      protein,
+      carbohydrates,
+      fat,
+      calories,
+    });
+
+    try {
+      const newRecipe = await recipe.save();
+      res.status(200).json({ newRecipe });
+    } catch (err) {
+      res.status(500);
+      throw new Error(err as string);
+    }
+  },
+);
+
+router.put('/edit', auth, body('_id').isMongoId(), async (req: Request, res: Response) => {
+  console.log(req.body);
+  const { _id, name, author, ingredients, protein, carbohydrates, fat, calories } = req.body;
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  if (!name || !author || !ingredients || !protein || !carbohydrates || !fat || !calories) {
+    throw new Error('missing parametrs');
+  }
+
+  const awaitForIngredients = ingredients.map(async (el: any) => {
+    const ingredient = await Ingredient.findById(el.id);
+
+    console.log(ingredient);
+    return { name: el.name, unit: el.unit, qty: el.qty, type: ingredient?.type, _id: new mongoose.Types.ObjectId(el.id) };
+  });
+
+  const allIngredients = await Promise.all(awaitForIngredients);
+
+  let recipe;
+  try {
+    recipe = await Recipe.findById(_id);
+    if (recipe) {
+      recipe.name = name;
+      recipe.author = author;
+      recipe.ingredients = allIngredients;
+      recipe.protein = protein;
+      recipe.carbohydrates = carbohydrates;
+      recipe.fat = fat;
+      recipe.calories = calories;
+
+      const editedRecipe = await recipe.save();
+      res.status(200).json({ editedRecipe });
+    } else {
+        res.status(404).send('Recipe not found');
+    }
+  } catch (err) {
+    res.status(500);
+    throw new Error('recipe edit error');
+  }
+});
+
+router.delete('/delete', body('id').isMongoId(), async (req: Request, res: Response) => {
+  const { id } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  let recipe;
+  try {
+    recipe = await Recipe.findById(id);
+    if (recipe) {
+        await recipe.deleteOne(); // remove() is deprecated
+        res.status(200).send('deleted');
+    } else {
+        res.status(404).send('Recipe not found');
+    }
+  } catch (err) {
+    res.status(500);
+    throw new Error('recipe edit error');
+  }
+});
+
+export default router;

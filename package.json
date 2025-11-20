@@ -5,8 +5,9 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node dist/app.js",
+    "build": "tsc",
+    "dev": "nodemon app.ts"
   },
   "author": "",
   "license": "ISC",
@@ -25,9 +26,17 @@
     "volleyball": "^1.5.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.10.1",
+    "@types/uuid": "^10.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "nodemon": "^3.1.11",
-    "redis-om": "^0.4.7"
+    "redis-om": "^0.4.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }
