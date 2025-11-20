@@ -220,7 +220,7 @@ router.delete('/delete', body('id').isMongoId(), async (req, res) => {
   console.log('run')
   try {
     let shoppingList = await ShoppingList.findById(id)
-    await shoppingList.remove()
+    await shoppingList.deleteOne()
     res.status(200).send('deleted')
   } catch (err) {
     res.status(500).send('error')

@@ -11,22 +11,23 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.24.0",
-    "bcryptjs": "^2.4.3",
-    "body-parser": "^1.19.1",
+    "axios": "^1.13.2",
+    "bcryptjs": "^3.0.3",
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
-    "express": "^4.17.2",
-    "express-validator": "^6.14.0",
-    "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.2.3",
-    "redis": "^4.0.1",
-    "uuid": "^8.3.2",
+    "express": "^5.1.0",
+    "express-validator": "^7.3.1",
+    "globals": "^16.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.20.0",
+    "redis": "^5.10.0",
+    "uuid": "^13.0.0",
     "volleyball": "^1.5.1"
   },
   "devDependencies": {
-    "dotenv": "^11.0.0",
-    "eslint": "^8.13.0",
-    "nodemon": "^2.0.15",
-    "redis-om": "0.1.7"
+    "dotenv": "^17.2.3",
+    "eslint": "^9.39.1",
+    "nodemon": "^3.1.11",
+    "redis-om": "^0.4.7"
   }
 }

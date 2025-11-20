@@ -20,7 +20,7 @@ router.post('/login', body('email').isEmail(), body('password').isString(), asyn
     const user = await User.findOne({ email })
     console.log('fsd2')
     if (!user) {
-      return res.status(400).json({ errors: "user not found" })
+      return res.status(400).json({ errors: 'user not found' })
     }
     if (user && (await bcryptjs.compare(password, user.password))) {
       // Create token
